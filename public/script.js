@@ -44,20 +44,27 @@ async function processPDF() {
 
         // Format results with match types
         resultsDiv.innerHTML = response.text.split('\n')
+            .filter(line => line.trim().length > 0)
             .map(line => {
                 if (line.startsWith('[')) {
-                    const matchType = line.includes('KEYWORD') ? 
-                        '<span class="match-type">Keyword Match</span>' :
-                        '<span class="match-type">Topic Match</span>';
+                    const isKeyword = line.includes('KEYWORD');
+                    const matchType = isKeyword ? 'Keyword Match' : 'Topic Match';
+                    const lineClass = isKeyword ? 'keyword-match' : 'topic-match';
                     
-                    const lineClass = line.includes('KEYWORD') ? 
-                        'keyword-match' : 'topic-match';
+                    const cleanLine = line
+                        .replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')
+                        .replace(/\([^)]*\)/g, '')
+                        .trim();
                     
-                    return `<div class="result-line ${lineClass}">${line.replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')}${matchType}</div>`;
+                    return `
+                        <div class="result-line ${lineClass}">
+                            ${cleanLine}
+                            <span class="match-type">${matchType}</span>
+                        </div>`;
                 }
-                return line;
+                return `<div class="result-line">${line}</div>`;
             })
-            .join('\n');
+            .join('');
 
         resultsDiv.classList.add('success');
 

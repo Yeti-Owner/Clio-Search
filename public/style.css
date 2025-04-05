@@ -2,6 +2,7 @@ body {
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
     margin: 20px;
     background-color: #f8f8f8;
+    line-height: 1.6;
 }
 
 .container {
@@ -71,29 +72,33 @@ button:hover {
 }
 
 #results {
-    white-space: pre-wrap;
     margin-top: 25px;
     padding: 20px;
     border: 2px solid #ecf0f1;
     border-radius: 4px;
-    min-height: 150px;
     background: #fdfdfd;
 }
 
 .result-line {
-    margin: 12px 0;
-    padding: 10px;
+    margin: 15px 0;
+    padding: 12px 15px;
     border-left: 4px solid #3498db;
     background-color: #f5faff;
     position: relative;
+    padding-right: 120px; /* Space for match type */
 }
 
 .match-type {
-    font-size: 0.9em;
-    color: #95a5a6;
     position: absolute;
-    right: 10px;
-    top: 5px;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.9);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    color: #7f8c8d;
+    border: 1px solid #eee;
 }
 
 .keyword-match {
@@ -110,9 +115,23 @@ button:hover {
     color: #c0392b;
     border-color: #c0392b !important;
     background-color: #f9ebea;
+    padding: 15px;
 }
 
 .success {
     color: #27ae60;
     border-color: #2ecc71 !important;
+}
+
+@media (max-width: 600px) {
+    .result-line {
+        padding-right: 15px;
+        padding-bottom: 30px;
+    }
+    .match-type {
+        top: auto;
+        bottom: 10px;
+        right: 15px;
+        transform: none;
+    }
 }
