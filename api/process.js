@@ -1,51 +1,83 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 module.exports = async (req, res) => {
+    console.log('Request received. Method:', req.method);
+    
     try {
-        // Check for POST method
         if (req.method !== 'POST') {
+            console.warn('Method not allowed:', req.method);
             return res.status(405).json({ error: 'Method not allowed' });
         }
 
         const { pdfData, keywords } = req.body;
-        
-        // Validate input
+        console.log('Request body received with keywords:', keywords);
+        console.log('PDF data length:', pdfData?.length);
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('Missing API key');
+            return res.status(500).json({ error: 'Server configuration error' });
+        }
+
         if (!pdfData || !keywords?.length) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            console.warn('Invalid request parameters');
+            return res.status(400).json({ error: 'Missing PDF data or keywords' });
+        }
+
+        if (pdfData.length > 2 * 1024 * 1024) { // 2MB limit
+            console.warn('PDF too large:', pdfData.length);
+            return res.status(400).json({ error: 'PDF exceeds 2MB limit' });
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            generationConfig: { responseMimeType: "text/plain" }
+        });
 
-        const prompt = `Extract all complete sentences from the document that contain any of these keywords: ${keywords.join(", ")}. 
-            Return only the exact sentences with their page numbers in this format:
-            [Page X] Sentence text here...
-            If no matches found, state "No matches found."`;
+        const prompt = `Extract complete sentences containing these keywords: ${keywords.join(", ")}.
+            Format: [Page X] Sentence text...
+            If none, say "No matches found."`;
 
-        const contents = [
-            { text: prompt },
-            {
-                inlineData: {
-                    mimeType: "application/pdf",
-                    data: pdfData
+        console.log('Sending request to Gemini...');
+        const result = await model.generateContent({
+            contents: [
+                { text: prompt },
+                {
+                    inlineData: {
+                        mimeType: "application/pdf",
+                        data: pdfData
+                    }
                 }
-            }
-        ];
+            ]
+        });
 
-        const result = await model.generateContent({ contents });
+        console.log('Received Gemini response');
         const response = await result.response;
         
-        // Ensure we have valid text response
         if (!response.text) {
-            throw new Error('No response text from Gemini');
+            console.error('No text in Gemini response:', response);
+            return res.status(500).json({ error: 'Empty response from AI' });
         }
 
-        res.status(200).json({ text: response.text() });
+        console.log('Successfully processed request');
+        return res.status(200).json({ text: response.text() });
+
     } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ 
-            error: error.message,
-            ...(error.response?.text) && { geminiResponse: error.response.text() }
+        console.error('Full error stack:', error.stack);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            status: error.status
+        });
+
+        let clientMessage = error.message;
+        if (error.message.includes('400')) clientMessage = 'Invalid PDF format';
+        if (error.message.includes('500')) clientMessage = 'AI processing failed';
+        if (error.message.includes('403')) clientMessage = 'Authorization error - check API key';
+
+        return res.status(500).json({ 
+            error: clientMessage,
+            systemError: error.message.slice(0, 100) // Truncate for security
         });
     }
 };

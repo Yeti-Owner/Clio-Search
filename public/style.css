@@ -48,3 +48,20 @@ button:hover {
     border-radius: 4px;
     min-height: 100px;
 }
+
+.error {
+    color: #dc3545;
+    border-color: #dc3545 !important;
+    background-color: #f8d7da;
+}
+
+.success {
+    color: #155724;
+    border-color: #c3e6cb !important;
+    background-color: #d4edda;
+}
+
+button:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+}
