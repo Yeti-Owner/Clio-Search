@@ -1,21 +1,21 @@
 body {
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
     margin: 20px;
-    background-color: #f8f8f8;
+    background-color: #E4E4D0;
     line-height: 1.6;
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
-    background: white;
+    background: #FFEEF4;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 h1 {
-    color: #2c3e50;
+    color: #94A684;
     text-align: center;
     font-size: 2.5em;
     margin-bottom: 0;
@@ -23,21 +23,21 @@ h1 {
 
 .subtitle {
     text-align: center;
-    color: #7f8c8d;
+    color: #AEC3AE;
     font-style: italic;
     margin-top: 5px;
 }
 
 .instructions {
-    background: #f9f9f9;
-    border-left: 4px solid #3498db;
+    background: #FFF;
+    border-left: 4px solid #94A684;
     padding: 15px;
     margin: 20px 0;
     border-radius: 4px;
 }
 
 .instructions h3 {
-    color: #2c3e50;
+    color: #94A684;
     margin-top: 0;
 }
 
@@ -50,7 +50,7 @@ h1 {
 
 input[type="file"], input[type="text"] {
     padding: 10px;
-    border: 2px solid #bdc3c7;
+    border: 2px solid #AEC3AE;
     border-radius: 4px;
     flex-grow: 1;
     font-size: 16px;
@@ -58,7 +58,7 @@ input[type="file"], input[type="text"] {
 
 button {
     padding: 10px 25px;
-    background-color: #3498db;
+    background-color: #94A684;
     color: white;
     border: none;
     border-radius: 4px;
@@ -68,22 +68,22 @@ button {
 }
 
 button:hover {
-    background-color: #2980b9;
+    background-color: #7D8B6A;
 }
 
 #results {
     margin-top: 25px;
     padding: 20px;
-    border: 2px solid #ecf0f1;
+    border: 2px solid #AEC3AE;
     border-radius: 4px;
-    background: #fdfdfd;
+    background: #FFF;
 }
 
 .result-line {
     margin: 15px 0;
     padding: 12px 15px;
-    border-left: 4px solid #3498db;
-    background-color: #f5faff;
+    border-left: 4px solid #94A684;
+    background-color: #E4E4D0;
     position: relative;
     padding-right: 180px; 
     min-height: 40px;
@@ -107,25 +107,25 @@ button:hover {
 }
 
 .keyword-match {
-    border-color: #e74c3c;
-    background-color: #fdedec;
+    border-color: #AEC3AE;
+    background-color: #FFEEF4;
 }
 
 .topic-match {
-    border-color: #2ecc71;
-    background-color: #e8f6f3;
+    border-color: #94A684;
+    background-color: #AEC3AE;
 }
 
 .error {
-    color: #c0392b;
-    border-color: #c0392b !important;
-    background-color: #f9ebea;
+    color: #94A684;
+    border-color: #94A684 !important;
+    background-color: #FFEEF4;
     padding: 15px;
 }
 
 .success {
-    color: #27ae60;
-    border-color: #2ecc71 !important;
+    color: #AEC3AE;
+    border-color: #AEC3AE !important;
 }
 
 @media (max-width: 600px) {
