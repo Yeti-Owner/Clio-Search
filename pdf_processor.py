@@ -85,39 +85,51 @@ class PDFProcessor:
         if rotation != 0:
             page.set_rotation(0)
     
-        # First try all text extraction methods
-        text = page.get_text("text")
-        if not text.strip():
-            text = page.get_text("words")
-            text = " ".join([word[4] for word in text if word[4].strip()])
-        if not text.strip():
-            text = page.get_text("blocks")
-            text = " ".join([block[4] for block in text if isinstance(block, tuple) and len(block) > 4 and block[4].strip()])
+        # Try all text extraction methods
+        methods = ["text", "blocks", "words"]
+        for method in methods:
+            try:
+                content = page.get_text(method)
+                if method == "blocks":
+                    text = " ".join([block[4] for block in content if isinstance(block, tuple) and len(block) > 4])
+                elif method == "words":
+                    text = " ".join([word[4] for word in content if isinstance(word, tuple) and len(word) > 4])
+                else:
+                    text = content
+            
+                if text.strip():
+                    print(f"Successful {method} extraction")
+                    return text
+            except Exception as e:
+                continue
     
-        # If still no text, mark for OCR
-        if not text.strip() or "image:" in text:
-            return ""  # Force OCR fallback
-        return text
+        return ""  # Fall back to OCR
 
 
     def extract_text_with_ocr(self, page):
         try:
-            # Increase DPI for better OCR accuracy
             pix = page.get_pixmap(dpi=400)
             img_path = tempfile.mktemp(suffix=".png")
             pix.save(img_path)
         
-            # Custom OCR configuration
-            custom_config = r'--oem 3 --psm 6'
-            text = pytesseract.image_to_string(img_path, config=custom_config)
+            # Improved OCR configuration
+            custom_config = r'--oem 3 --psm 6 -c preserve_interword_spaces=1'
+            text = pytesseract.image_to_string(img_path, 
+                                             config=custom_config,
+                                             lang='eng')
         
-            # Post-process OCR results
-            text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+            # Better sentence splitting for OCR output
+            text = re.sub(r'(\w)-\s*\n\s*(\w)', r'\1\2', text)  # Fix hyphenated words
+            text = re.sub(r'\s+', ' ', text)  # Normalize spaces
             os.remove(img_path)
+
+            # Debug output
+            print(f"OCR extracted text length: {len(text)} characters")
             return text.strip()
         except Exception as e:
             print(f"OCR Error: {str(e)}")
             return ""
+
 
     def detect_rotation(self, img_path):
         try:

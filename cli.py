@@ -4,7 +4,7 @@ from search_engine import SearchEngine
 import sys
 
 def main():
-    parser = argparse.ArgumentParser(description="Universal PDF Search Tool")
+    parser = argparse.ArgumentParser(description="PDF Search Tool")
     parser.add_argument("file", help="Path to PDF file")
     parser.add_argument("keyword", help="Keyword to search")
     
@@ -15,21 +15,20 @@ def main():
         processor = PDFProcessor(args.file)
         text_pages = processor.extract_text()
         
-        print(f"\nSearching for '{args.keyword}' in {len(text_pages)} sentences...")
+        print(f"\nSearching for '{args.keyword}'...")
         engine = SearchEngine(text_pages)
         results = engine.keyword_search(args.keyword)
         
         if not results:
-            print(f"\nNo results found for '{args.keyword}'")
-            print("Possible reasons:")
-            print("- The keyword doesn't exist in the document")
-            print("- The PDF is image-based and OCR failed")
-            print("- The text encoding is unusual")
+            print("\nNo matches found. Possible issues:")
+            print("- Try different keywords")
+            print("- Check if text is visible in PDF")
+            print("- Try a simpler PDF for testing")
         else:
             print(f"\nFound {len(results)} matches:")
-            for result in results:
-                print(f"\n[Page {result['page']}] {result['sentence']}")
-        print()
+            for i, result in enumerate(results, 1):
+                print(f"\nMatch {i} (Page {result['page']}):")
+                print(result["sentence"])
     
     except Exception as e:
         print(f"\nERROR: {str(e)}", file=sys.stderr)
