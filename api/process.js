@@ -27,20 +27,20 @@ module.exports = async (req, res) => {
 1. Process ALL text including rotated pages and scanned content
 2. Identify both PDF page numbers and document's visible page numbers
 3. Search for:
-   - EXACT matches of: ${keywords.map(k => `"${k}"`).join(', ')}
-   - TOPIC discussions of: ${topics.map(t => `[${t}]`).join(', ')}
-4. For each match, return:
-   [PDF Page X | Doc Page Y] Sentence (MATCH_TYPE)
-   - X = PDF page (1-based)
-   - Y = Document's page number if visible
-   - MATCH_TYPE = KEYWORD_MATCH or TOPIC_MATCH
+   - EXACT matches of: ${keywords.map(k => `"${k}"`).join(', ')} ${keywords.length > 0 ? '(KEYWORD_MATCH)' : ''}
+   - TOPIC discussions of: ${topics.map(t => `[${t}]`).join(', ')} ${topics.length > 0 ? '(TOPIC_MATCH)' : ''}
+4. For each match, return EXACTLY this format:
+   [PDF Page X | Doc Page Y] Full sentence
+   (Match type: ${keywords.length > 0 ? 'KEYWORD' : ''}${keywords.length > 0 && topics.length > 0 ? ' or ' : ''}${topics.length > 0 ? 'TOPIC' : ''})
 5. Preserve original text case
-6. Explain match reason briefly in parentheses
-7. If no matches: "No historical matches found"
+6. If no matches: "No historical matches found"
 
-EXAMPLE:
-[PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312" (KEYWORD_MATCH: "Templar")
-[PDF Page 5 | Doc Page 130] Economic impacts included trade route changes (TOPIC_MATCH: [economic impact])`;
+EXAMPLE OUTPUT:
+[PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312"
+(Match type: KEYWORD)
+
+[PDF Page 5 | Doc Page 130] Economic impacts included trade route changes
+(Match type: TOPIC)`;
 
         const result = await model.generateContent({
             contents: [{
@@ -57,11 +57,13 @@ EXAMPLE:
         });
 
         const response = await result.response;
-        const rawText = response.text();
+        let formattedText = response.text();
 
-        // Post-processing
-        const formattedText = rawText
-            .replace(/(KEYWORD|TOPIC)_MATCH/g, '$1_MATCH')
+        // Clean up any residual formatting issues
+        formattedText = formattedText
+            .replace(/\(\s*:\s*/g, '(') // Fix ": " in parentheses
+            .replace(/"\s*\)/g, '")') // Fix quotes before )
+            .replace(/\(\s*Match\s*type\s*:\s*/gi, '(Match type: ') // Standardize match type
             .replace(/No matches found/gi, 'No historical matches found')
             .replace(/(\d+)\s*\|\s*(\d+)/g, 'PDF Page $1 | Doc Page $2');
 

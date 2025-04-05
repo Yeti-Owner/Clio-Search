@@ -3,7 +3,7 @@ async function processPDF() {
     const searchInput = document.getElementById('searchTerms').value;
     const resultsDiv = document.getElementById('results');
     
-    resultsDiv.textContent = '';
+    resultsDiv.innerHTML = '';
     resultsDiv.classList.remove('error', 'success');
 
     if (!file || !searchInput) {
@@ -14,7 +14,6 @@ async function processPDF() {
     showLoading(true);
 
     try {
-        // Parse search terms
         const terms = searchInput.split(',')
             .map(t => t.trim())
             .filter(t => t.length > 0);
@@ -42,24 +41,35 @@ async function processPDF() {
             return;
         }
 
-        // Format results with match types
-        resultsDiv.innerHTML = response.text.split('\n')
+        // Process and display results
+        const results = response.text.split('\n')
+            .filter(line => line.trim().length > 0)
             .map(line => {
                 if (line.startsWith('[')) {
-                    const matchType = line.includes('KEYWORD') ? 
-                        '<span class="match-type">Keyword Match</span>' :
-                        '<span class="match-type">Topic Match</span>';
+                    const isKeywordMatch = line.includes('(Match type: KEYWORD)');
+                    const matchType = isKeywordMatch ? 'Keyword Match' : 'Topic Match';
+                    const matchClass = isKeywordMatch ? 'keyword-match' : 'topic-match';
                     
-                    const lineClass = line.includes('KEYWORD') ? 
-                        'keyword-match' : 'topic-match';
+                    const content = line
+                        .replace(/\(Match type: KEYWORD\)/g, '')
+                        .replace(/\(Match type: TOPIC\)/g, '')
+                        .trim();
                     
-                    return `<div class="result-line ${lineClass}">${line.replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')}${matchType}</div>`;
+                    return `
+                        <div class="result-line ${matchClass}">
+                            ${content}
+                            <span class="match-type">${matchType}</span>
+                        </div>
+                    `;
                 }
-                return line;
-            })
-            .join('\n');
+                return `<div>${line}</div>`;
+            });
 
-        resultsDiv.classList.add('success');
+        resultsDiv.innerHTML = results.join('');
+
+        if (results.length > 0) {
+            resultsDiv.classList.add('success');
+        }
 
     } catch (error) {
         showError(error.message);
@@ -68,6 +78,7 @@ async function processPDF() {
     }
 }
 
+// Helper functions remain unchanged
 async function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -102,17 +113,15 @@ async function callProcessingAPI(base64PDF, { keywords, topics }) {
 
 function showError(message) {
     const resultsDiv = document.getElementById('results');
-    resultsDiv.textContent = `Error: ${message}`;
-    resultsDiv.classList.add('error');
+    resultsDiv.innerHTML = `<div class="error">${message}</div>`;
 }
 
 function showLoading(isLoading) {
     const button = document.querySelector('button');
     button.disabled = isLoading;
-    button.textContent = isLoading ? 'Processing...' : 'Search';
+    button.textContent = isLoading ? 'Searching History...' : 'Search History';
 }
 
-// Event listeners remain the same as previous version
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('searchTerms').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') processPDF();
