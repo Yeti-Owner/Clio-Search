@@ -30,7 +30,24 @@ async function processPDF() {
         }, { keywords: [], topics: [] });
 
         if (keywords.length === 0 && topics.length === 0) {
-            throw new Error('Invalid search format - use "quotes" or [brackets]');
+            throw new Error('Invalid search format - use "quotes" for exact terms or [brackets] for topics');
+        }
+
+        // Sensitive topic warning
+        const sensitiveTopics = ['incest', 'violence', 'abuse', 'trauma'];
+        const hasSensitiveTopic = topics.some(topic => 
+            sensitiveTopics.some(st => topic.toLowerCase().includes(st.toLowerCase()))
+        ) || keywords.some(keyword => 
+            sensitiveTopics.some(st => keyword.toLowerCase().includes(st.toLowerCase()))
+        );
+
+        if (hasSensitiveTopic) {
+            const proceed = confirm('Warning: This search includes sensitive historical content. Continue?');
+            if (!proceed) {
+                resultsDiv.textContent = 'Search canceled';
+                showLoading(false);
+                return;
+            }
         }
 
         const base64PDF = await readFileAsBase64(file);
@@ -69,6 +86,8 @@ async function processPDF() {
 
         if (results.length > 0) {
             resultsDiv.classList.add('success');
+        } else {
+            resultsDiv.textContent = 'No matches found after comprehensive analysis';
         }
 
     } catch (error) {
@@ -78,7 +97,6 @@ async function processPDF() {
     }
 }
 
-// Helper functions remain unchanged
 async function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
