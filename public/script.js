@@ -3,9 +3,8 @@ async function processPDF() {
     const keywords = document.getElementById('keywords').value;
     const resultsDiv = document.getElementById('results');
     
-    // Reset previous state
     resultsDiv.textContent = '';
-    resultsDiv.classList.remove('error');
+    resultsDiv.classList.remove('error', 'success');
 
     if (!file || !keywords) {
         showError('Please select a PDF and enter keywords');
@@ -23,7 +22,15 @@ async function processPDF() {
             return;
         }
 
-        resultsDiv.textContent = response.text;
+        // Format results with line breaks
+        const formattedResults = response.text.replace(/\[/g, '\n[').trim();
+        resultsDiv.innerHTML = formattedResults.split('\n').map(line => {
+            if (line.startsWith('[')) {
+                return `<div class="result-line">${line}</div>`;
+            }
+            return line;
+        }).join('\n');
+
         resultsDiv.classList.add('success');
 
     } catch (error) {

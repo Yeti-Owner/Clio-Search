@@ -25,15 +25,30 @@ module.exports = async (req, res) => {
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-pro-latest", // Updated model name
-            generationConfig: { responseMimeType: "text/plain" }
+            model: "gemini-1.5-pro-latest",
+            generationConfig: { 
+                responseMimeType: "text/plain",
+                temperature: 0.2 // More precise responses
+            }
         });
 
-        const prompt = `Extract complete sentences containing these keywords: ${keywords.join(", ")}.
-            Format: [Page X] Sentence text...
-            If none, say "No matches found."`;
+        const prompt = `ANALYZE THIS DOCUMENT THOROUGHLY. Follow these instructions:
+1. Process ALL pages including rotated/upside-down text and multi-column layouts
+2. First identify the PDF page number (starting from 1) and any VISIBLE page numbers in the document content
+3. Search for these keywords: ${keywords.join(", ")}
+4. For each match, return:
+   [PDF Page X | Content Page Y] Full sentence with keyword
+   - X = PDF page number (1-based)
+   - Y = Visible page number in document (if exists)
+5. Include text from images/scan
+6. Preserve original capitalization
+7. If no matches, say "No matches found in document"
 
-        console.log('Sending request to Gemini...');
+EXAMPLE RESPONSE:
+[PDF Page 1 | Content Page 128] "The historical significance of the keyword example is evident in..."
+[PDF Page 2 | Content Page 129] "As shown in the diagram, example usage demonstrates..."`;
+
+        console.log('Sending enhanced request to Gemini...');
         const result = await model.generateContent({
             contents: [{
                 parts: [
@@ -56,8 +71,13 @@ module.exports = async (req, res) => {
             return res.status(500).json({ error: 'Empty response from AI' });
         }
 
+        // Post-process response
+        const formattedText = response.text()
+            .replace(/(\d+)\s*\|\s*(\d+)/g, 'PDF Page $1 | Content Page $2') // Standardize numbering
+            .replace(/No matches found/gi, 'No matches found in document');
+
         console.log('Successfully processed request');
-        return res.status(200).json({ text: response.text() });
+        return res.status(200).json({ text: formattedText });
 
     } catch (error) {
         console.error('Full error stack:', error.stack);
