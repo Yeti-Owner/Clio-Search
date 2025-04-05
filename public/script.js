@@ -3,7 +3,7 @@ async function processPDF() {
     const searchInput = document.getElementById('searchTerms').value;
     const resultsDiv = document.getElementById('results');
     
-    resultsDiv.innerHTML = '';
+    resultsDiv.textContent = '';
     resultsDiv.classList.remove('error', 'success');
 
     if (!file || !searchInput) {
@@ -14,6 +14,7 @@ async function processPDF() {
     showLoading(true);
 
     try {
+        // Parse search terms
         const terms = searchInput.split(',')
             .map(t => t.trim())
             .filter(t => t.length > 0);
@@ -30,24 +31,7 @@ async function processPDF() {
         }, { keywords: [], topics: [] });
 
         if (keywords.length === 0 && topics.length === 0) {
-            throw new Error('Invalid search format - use "quotes" for exact terms or [brackets] for topics');
-        }
-
-        // Sensitive topic warning
-        const sensitiveTopics = ['incest', 'violence', 'abuse', 'trauma'];
-        const hasSensitiveTopic = topics.some(topic => 
-            sensitiveTopics.some(st => topic.toLowerCase().includes(st.toLowerCase()))
-        ) || keywords.some(keyword => 
-            sensitiveTopics.some(st => keyword.toLowerCase().includes(st.toLowerCase()))
-        );
-
-        if (hasSensitiveTopic) {
-            const proceed = confirm('Warning: This search includes sensitive historical content. Continue?');
-            if (!proceed) {
-                resultsDiv.textContent = 'Search canceled';
-                showLoading(false);
-                return;
-            }
+            throw new Error('Invalid search format - use "quotes" or [brackets]');
         }
 
         const base64PDF = await readFileAsBase64(file);
@@ -58,37 +42,24 @@ async function processPDF() {
             return;
         }
 
-        // Process and display results
-        const results = response.text.split('\n')
-            .filter(line => line.trim().length > 0)
+        // Format results with match types
+        resultsDiv.innerHTML = response.text.split('\n')
             .map(line => {
                 if (line.startsWith('[')) {
-                    const isKeywordMatch = line.includes('(Match type: KEYWORD)');
-                    const matchType = isKeywordMatch ? 'Keyword Match' : 'Topic Match';
-                    const matchClass = isKeywordMatch ? 'keyword-match' : 'topic-match';
+                    const matchType = line.includes('KEYWORD') ? 
+                        '<span class="match-type">Keyword Match</span>' :
+                        '<span class="match-type">Topic Match</span>';
                     
-                    const content = line
-                        .replace(/\(Match type: KEYWORD\)/g, '')
-                        .replace(/\(Match type: TOPIC\)/g, '')
-                        .trim();
+                    const lineClass = line.includes('KEYWORD') ? 
+                        'keyword-match' : 'topic-match';
                     
-                    return `
-                        <div class="result-line ${matchClass}">
-                            ${content}
-                            <span class="match-type">${matchType}</span>
-                        </div>
-                    `;
+                    return `<div class="result-line ${lineClass}">${line.replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')}${matchType}</div>`;
                 }
-                return `<div>${line}</div>`;
-            });
+                return line;
+            })
+            .join('\n');
 
-        resultsDiv.innerHTML = results.join('');
-
-        if (results.length > 0) {
-            resultsDiv.classList.add('success');
-        } else {
-            resultsDiv.textContent = 'No matches found after comprehensive analysis';
-        }
+        resultsDiv.classList.add('success');
 
     } catch (error) {
         showError(error.message);
@@ -131,15 +102,17 @@ async function callProcessingAPI(base64PDF, { keywords, topics }) {
 
 function showError(message) {
     const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = `<div class="error">${message}</div>`;
+    resultsDiv.textContent = `Error: ${message}`;
+    resultsDiv.classList.add('error');
 }
 
 function showLoading(isLoading) {
     const button = document.querySelector('button');
     button.disabled = isLoading;
-    button.textContent = isLoading ? 'Searching History...' : 'Search History';
+    button.textContent = isLoading ? 'Processing...' : 'Search';
 }
 
+// Event listeners remain the same as previous version
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('searchTerms').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') processPDF();

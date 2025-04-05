@@ -2,7 +2,6 @@ body {
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
     margin: 20px;
     background-color: #f8f8f8;
-    line-height: 1.6;
 }
 
 .container {
@@ -72,33 +71,29 @@ button:hover {
 }
 
 #results {
+    white-space: pre-wrap;
     margin-top: 25px;
     padding: 20px;
     border: 2px solid #ecf0f1;
     border-radius: 4px;
+    min-height: 150px;
     background: #fdfdfd;
 }
 
 .result-line {
-    margin: 15px 0;
-    padding: 12px 15px;
+    margin: 12px 0;
+    padding: 10px;
     border-left: 4px solid #3498db;
     background-color: #f5faff;
     position: relative;
-    padding-right: 120px;
-    word-wrap: break-word;
 }
 
 .match-type {
+    font-size: 0.9em;
+    color: #95a5a6;
     position: absolute;
     right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.8em;
-    color: #95a5a6;
-    background: rgba(255,255,255,0.8);
-    padding: 2px 6px;
-    border-radius: 3px;
+    top: 5px;
 }
 
 .keyword-match {
@@ -120,11 +115,4 @@ button:hover {
 .success {
     color: #27ae60;
     border-color: #2ecc71 !important;
-}
-
-.match-reason {
-    font-size: 0.85em;
-    color: #7f8c8d;
-    display: block;
-    margin-top: 5px;
 }

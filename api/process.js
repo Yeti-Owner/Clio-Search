@@ -19,29 +19,28 @@ module.exports = async (req, res) => {
             model: "gemini-1.5-pro-latest",
             generationConfig: { 
                 responseMimeType: "text/plain",
-                temperature: 0.3 // Slightly higher for better recall
+                temperature: 0.1
             }
         });
 
-        const prompt = `Analyze this document thoroughly with priority on CONTENT ACCURACY over formatting. Follow these rules:
+        const prompt = `ANALYZE THIS HISTORICAL DOCUMENT. Follow these rules:
+1. Process ALL text including rotated pages and scanned content
+2. Identify both PDF page numbers and document's visible page numbers
+3. Search for:
+   - EXACT matches of: ${keywords.map(k => `"${k}"`).join(', ')}
+   - TOPIC discussions of: ${topics.map(t => `[${t}]`).join(', ')}
+4. For each match, return:
+   [PDF Page X | Doc Page Y] Sentence (MATCH_TYPE)
+   - X = PDF page (1-based)
+   - Y = Document's page number if visible
+   - MATCH_TYPE = KEYWORD_MATCH or TOPIC_MATCH
+5. Preserve original text case
+6. Explain match reason briefly in parentheses
+7. If no matches: "No historical matches found"
 
-1. Search for ALL mentions of:
-   - Exact terms: ${keywords.map(k => `"${k}"`).join(', ')}
-   - Topics: ${topics.map(t => `[${t}]`).join(', ')}
-
-2. Include ALL matches regardless of:
-   - Text orientation (rotated/upside-down)
-   - Page layout
-   - Font variations
-   - Case sensitivity
-
-3. For sensitive topics (like [incest]), be comprehensive but professional
-
-4. Return format (PRIORITIZE CONTENT OVER PERFECT FORMATTING):
-   [Page X] Full sentence or relevant passage
-   (Match type: ${keywords.length > 0 ? 'KEYWORD' : ''}${keywords.length > 0 && topics.length > 0 ? ' or ' : ''}${topics.length > 0 ? 'TOPIC' : ''})
-
-5. If no matches found after thorough search, say: "No matches found after comprehensive analysis"`;
+EXAMPLE:
+[PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312" (KEYWORD_MATCH: "Templar")
+[PDF Page 5 | Doc Page 130] Economic impacts included trade route changes (TOPIC_MATCH: [economic impact])`;
 
         const result = await model.generateContent({
             contents: [{
@@ -58,19 +57,20 @@ module.exports = async (req, res) => {
         });
 
         const response = await result.response;
-        let resultText = response.text();
+        const rawText = response.text();
 
-        // Clean up while preserving matches
-        resultText = resultText
-            .replace(/\(\s*Match\s*type\s*:\s*/gi, '(Match type: ')
-            .replace(/No matches found/gi, 'No matches found after comprehensive analysis');
+        // Post-processing
+        const formattedText = rawText
+            .replace(/(KEYWORD|TOPIC)_MATCH/g, '$1_MATCH')
+            .replace(/No matches found/gi, 'No historical matches found')
+            .replace(/(\d+)\s*\|\s*(\d+)/g, 'PDF Page $1 | Doc Page $2');
 
-        return res.status(200).json({ text: resultText });
+        return res.status(200).json({ text: formattedText });
 
     } catch (error) {
         console.error('Error:', error.stack);
         return res.status(500).json({ 
-            error: 'Analysis failed - please try again or check document quality',
+            error: error.message.includes('400') ? 'Invalid document format' : 'Historical analysis failed',
             details: error.message.slice(0, 100)
         });
     }
