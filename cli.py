@@ -13,15 +13,18 @@ def main():
     try:
         print(f"\nProcessing {args.file}...")
         processor = PDFProcessor(args.file)
-        print("- Detecting text/rotation...")
         text_pages = processor.extract_text()
         
-        print(f"- Searching for '{args.keyword}'...")
+        print(f"\nSearching for '{args.keyword}' in {len(text_pages)} sentences...")
         engine = SearchEngine(text_pages)
         results = engine.keyword_search(args.keyword)
         
         if not results:
             print(f"\nNo results found for '{args.keyword}'")
+            print("Possible reasons:")
+            print("- The keyword doesn't exist in the document")
+            print("- The PDF is image-based and OCR failed")
+            print("- The text encoding is unusual")
         else:
             print(f"\nFound {len(results)} matches:")
             for result in results:
