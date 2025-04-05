@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
 1. Process ALL text including rotated pages and scanned content
 2. Identify both PDF page numbers and document's visible page numbers
 3. Search for:
-   - EXACT matches of: ${keywords.map(k => `"${k}"`).join(', ')}
+   - ANY mention of: ${keywords.map(k => `"${k}"`).join(', ')}
    - TOPIC discussions of: ${topics.map(t => `[${t}]`).join(', ')}
 4. For each match, return:
    [PDF Page X | Doc Page Y] Sentence (MATCH_TYPE)
@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
 5. Preserve original text case
 6. Explain match reason briefly in parentheses
 7. If no matches: "No historical matches found"
+8. Thoroughly double check to make sure you get ALL mentions and topic discussions
 
 EXAMPLE:
 [PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312" (KEYWORD_MATCH: "Templar")
