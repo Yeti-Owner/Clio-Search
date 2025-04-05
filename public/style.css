@@ -85,7 +85,7 @@ button:hover {
     border-left: 4px solid #3498db;
     background-color: #f5faff;
     position: relative;
-    padding-right: 120px; /* Space for match type */
+    padding-right: 120px;
 }
 
 .match-type {
@@ -99,6 +99,10 @@ button:hover {
     font-size: 0.8em;
     color: #7f8c8d;
     border: 1px solid #eee;
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .keyword-match {
@@ -133,5 +137,7 @@ button:hover {
         bottom: 10px;
         right: 15px;
         transform: none;
+        max-width: 120px;
+        font-size: 0.7em;
     }
 }

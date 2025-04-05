@@ -47,19 +47,19 @@ async function processPDF() {
             .filter(line => line.trim().length > 0)
             .map(line => {
                 if (line.startsWith('[')) {
-                    const isKeyword = line.includes('KEYWORD');
-                    const matchType = isKeyword ? 'Keyword Match' : 'Topic Match';
-                    const lineClass = isKeyword ? 'keyword-match' : 'topic-match';
+                    const matchData = line.match(/\((KEYWORD|TOPIC)_MATCH: (.*?)\)/);
+                    const matchType = matchData[1];
+                    const matchedTerm = matchData[2];
+                    const lineClass = matchType === 'KEYWORD' ? 'keyword-match' : 'topic-match';
                     
                     const cleanLine = line
-                        .replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')
-                        .replace(/\([^)]*\)/g, '')
+                        .replace(/\(.*?\)/g, '')
                         .trim();
-                    
+
                     return `
                         <div class="result-line ${lineClass}">
                             ${cleanLine}
-                            <span class="match-type">${matchType}</span>
+                            <span class="match-type">${matchType.replace('_', ' ')}: ${matchedTerm}</span>
                         </div>`;
                 }
                 return `<div class="result-line">${line}</div>`;
