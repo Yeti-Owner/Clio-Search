@@ -85,21 +85,22 @@ button:hover {
     border-left: 4px solid #3498db;
     background-color: #f5faff;
     position: relative;
-    padding-right: 120px;
+    padding-right: 180px; 
+    min-height: 40px;
 }
 
 .match-type {
     position: absolute;
-    right: 15px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     background: rgba(255,255,255,0.9);
-    padding: 3px 8px;
+    padding: 5px 10px;
     border-radius: 12px;
     font-size: 0.8em;
     color: #7f8c8d;
     border: 1px solid #eee;
-    max-width: 160px;
+    max-width: 150px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -130,14 +131,12 @@ button:hover {
 @media (max-width: 600px) {
     .result-line {
         padding-right: 15px;
-        padding-bottom: 30px;
+        padding-bottom: 40px;
     }
     .match-type {
+        max-width: 130px;
+        right: 10px;
+        bottom: 8px;
         top: auto;
-        bottom: 10px;
-        right: 15px;
-        transform: none;
-        max-width: 120px;
-        font-size: 0.7em;
     }
 }
