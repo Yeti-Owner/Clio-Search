@@ -35,9 +35,9 @@ module.exports = async (req, res) => {
    - Y = Document's page number if visible
    - MATCH_TYPE = KEYWORD_MATCH or TOPIC_MATCH
 5. Preserve original text case
-6. Say match reason briefly in parentheses ONLY by restating the exact keyword or topic
+6. Say match reason briefly in parentheses by restating the exact keyword or topic
 7. If no matches: "No historical matches found"
-8. Thoroughly double check to make sure you get ALL mentions and topic discussions
+8. THOROUGHLY double check all of the document to make sure you get EVERY mention of given keywords and topic discussions
 
 EXAMPLE:
 [PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312" (KEYWORD_MATCH: "Templar")
