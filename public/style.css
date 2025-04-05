@@ -14,6 +14,19 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.logo {
+    height: 60px;
+    width: auto;
+}
+
 h1 {
     color: #94A684;
     text-align: center;
@@ -83,10 +96,23 @@ button:hover {
     margin: 15px 0;
     padding: 12px 15px;
     border-left: 4px solid #94A684;
-    background-color: #E4E4D0;
+    background-color: #FFF;
     position: relative;
     padding-right: 180px; 
     min-height: 40px;
+    color: #6b7a6b;
+}
+
+.keyword-match {
+    border-color: #94A684;
+    background-color: #FFEEF4;
+    color: #7D8B6A;
+}
+
+.topic-match {
+    border-color: #AEC3AE;
+    background-color: #94A684;
+    color: #FFEEF4;
 }
 
 .match-type {
@@ -98,7 +124,6 @@ button:hover {
     padding: 5px 10px;
     border-radius: 12px;
     font-size: 0.8em;
-    color: #7f8c8d;
     border: 1px solid #eee;
     max-width: 150px;
     white-space: nowrap;
@@ -106,14 +131,15 @@ button:hover {
     text-overflow: ellipsis;
 }
 
-.keyword-match {
-    border-color: #AEC3AE;
-    background-color: #FFEEF4;
+.keyword-match .match-type {
+    color: #94A684;
+    border-color: #94A684;
 }
 
-.topic-match {
+.topic-match .match-type {
+    color: #94A684;
+    background-color: #FFEEF4;
     border-color: #94A684;
-    background-color: #AEC3AE;
 }
 
 .error {
