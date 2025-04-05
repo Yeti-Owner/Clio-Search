@@ -3,16 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Keyword Search</title>
+    <title>Clio Search</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>PDF Keyword Search</h1>
+        <h1>Clio Search</h1>
+        <p class="subtitle">Named after the Greek muse of history</p>
+        
+        <div class="instructions">
+            <h3>Search Guide:</h3>
+            <p>• Use "quotes" for exact keywords<br>
+               • Use [brackets] for topic searches<br>
+               • Separate terms with commas<br>
+               Example: "Templar", [religious influence], "1291", [economic impact]</p>
+        </div>
+
         <div class="input-group">
             <input type="file" id="pdfFile" accept=".pdf">
-            <input type="text" id="keywords" placeholder="Enter keywords (comma-separated)">
-            <button onclick="processPDF()">Search</button>
+            <input type="text" id="searchTerms" placeholder='Enter search terms (e.g., "keyword", [topic])'>
+            <button onclick="processPDF()">Search History</button>
         </div>
         <div id="results"></div>
     </div>

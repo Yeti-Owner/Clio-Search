@@ -1,35 +1,63 @@
 async function processPDF() {
     const file = document.getElementById('pdfFile').files[0];
-    const keywords = document.getElementById('keywords').value;
+    const searchInput = document.getElementById('searchTerms').value;
     const resultsDiv = document.getElementById('results');
     
     resultsDiv.textContent = '';
     resultsDiv.classList.remove('error', 'success');
 
-    if (!file || !keywords) {
-        showError('Please select a PDF and enter keywords');
+    if (!file || !searchInput) {
+        showError('Please select a PDF and enter search terms');
         return;
     }
 
     showLoading(true);
 
     try {
+        // Parse search terms
+        const terms = searchInput.split(',')
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+
+        const { keywords, topics } = terms.reduce((acc, term) => {
+            if (term.startsWith('"') && term.endsWith('"')) {
+                acc.keywords.push(term.slice(1, -1));
+            } else if (term.startsWith('[') && term.endsWith(']')) {
+                acc.topics.push(term.slice(1, -1));
+            } else {
+                acc.keywords.push(term);
+            }
+            return acc;
+        }, { keywords: [], topics: [] });
+
+        if (keywords.length === 0 && topics.length === 0) {
+            throw new Error('Invalid search format - use "quotes" or [brackets]');
+        }
+
         const base64PDF = await readFileAsBase64(file);
-        const response = await callProcessingAPI(base64PDF, keywords);
+        const response = await callProcessingAPI(base64PDF, { keywords, topics });
         
         if (response.error) {
             showError(response.error);
             return;
         }
 
-        // Format results with line breaks
-        const formattedResults = response.text.replace(/\[/g, '\n[').trim();
-        resultsDiv.innerHTML = formattedResults.split('\n').map(line => {
-            if (line.startsWith('[')) {
-                return `<div class="result-line">${line}</div>`;
-            }
-            return line;
-        }).join('\n');
+        // Format results with match types
+        resultsDiv.innerHTML = response.text.split('\n')
+            .map(line => {
+                if (line.startsWith('[')) {
+                    const matchType = line.includes('KEYWORD') ? 
+                        '<span class="match-type">Keyword Match</span>' :
+                        '<span class="match-type">Topic Match</span>';
+                    
+                    const lineClass = line.includes('KEYWORD') ? 
+                        'keyword-match' : 'topic-match';
+                    
+                    return `<div class="result-line ${lineClass}">${line.replace(/ ?(KEYWORD|TOPIC)_MATCH/g, '')}${matchType}</div>`;
+                }
+                return line;
+            })
+            .join('\n');
 
         resultsDiv.classList.add('success');
 
@@ -53,13 +81,14 @@ async function readFileAsBase64(file) {
     });
 }
 
-async function callProcessingAPI(base64PDF, keywords) {
+async function callProcessingAPI(base64PDF, { keywords, topics }) {
     const response = await fetch('/api/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             pdfData: base64PDF,
-            keywords: keywords.split(',').map(k => k.trim()).filter(k => k)
+            keywords,
+            topics
         })
     });
 
@@ -67,7 +96,6 @@ async function callProcessingAPI(base64PDF, keywords) {
     try {
         return JSON.parse(textResponse);
     } catch (e) {
-        console.error('Failed to parse response:', textResponse);
         throw new Error(`Server response error: ${textResponse.slice(0, 100)}`);
     }
 }
@@ -86,7 +114,7 @@ function showLoading(isLoading) {
 
 // Event listeners remain the same as previous version
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('keywords').addEventListener('keypress', (e) => {
+    document.getElementById('searchTerms').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') processPDF();
     });
     

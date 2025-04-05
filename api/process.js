@@ -5,22 +5,13 @@ module.exports = async (req, res) => {
     
     try {
         if (req.method !== 'POST') {
-            console.warn('Method not allowed:', req.method);
             return res.status(405).json({ error: 'Method not allowed' });
         }
 
-        const { pdfData, keywords } = req.body;
-        console.log('Request body received with keywords:', keywords);
-        console.log('PDF data length:', pdfData?.length);
+        const { pdfData, keywords = [], topics = [] } = req.body;
 
-        if (!process.env.GEMINI_API_KEY) {
-            console.error('Missing API key');
-            return res.status(500).json({ error: 'Server configuration error' });
-        }
-
-        if (!pdfData || !keywords?.length) {
-            console.warn('Invalid request parameters');
-            return res.status(400).json({ error: 'Missing PDF data or keywords' });
+        if (!pdfData || (keywords.length === 0 && topics.length === 0)) {
+            return res.status(400).json({ error: 'Missing PDF data or search terms' });
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -28,27 +19,29 @@ module.exports = async (req, res) => {
             model: "gemini-1.5-pro-latest",
             generationConfig: { 
                 responseMimeType: "text/plain",
-                temperature: 0.2 // More precise responses
+                temperature: 0.1
             }
         });
 
-        const prompt = `ANALYZE THIS DOCUMENT THOROUGHLY. Follow these instructions:
-1. Process ALL pages including rotated/upside-down text and multi-column layouts
-2. First identify the PDF page number (starting from 1) and any VISIBLE page numbers in the document content
-3. Search for these keywords: ${keywords.join(", ")}
+        const prompt = `ANALYZE THIS HISTORICAL DOCUMENT. Follow these rules:
+1. Process ALL text including rotated pages and scanned content
+2. Identify both PDF page numbers and document's visible page numbers
+3. Search for:
+   - EXACT matches of: ${keywords.map(k => `"${k}"`).join(', ')}
+   - TOPIC discussions of: ${topics.map(t => `[${t}]`).join(', ')}
 4. For each match, return:
-   [PDF Page X | Content Page Y] Full sentence with keyword
-   - X = PDF page number (1-based)
-   - Y = Visible page number in document (if exists)
-5. Include text from images/scan
-6. Preserve original capitalization
-7. If no matches, say "No matches found in document"
+   [PDF Page X | Doc Page Y] Sentence (MATCH_TYPE)
+   - X = PDF page (1-based)
+   - Y = Document's page number if visible
+   - MATCH_TYPE = KEYWORD_MATCH or TOPIC_MATCH
+5. Preserve original text case
+6. Explain match reason briefly in parentheses
+7. If no matches: "No historical matches found"
 
-EXAMPLE RESPONSE:
-[PDF Page 1 | Content Page 128] "The historical significance of the keyword example is evident in..."
-[PDF Page 2 | Content Page 129] "As shown in the diagram, example usage demonstrates..."`;
+EXAMPLE:
+[PDF Page 3 | Doc Page 128] "The Templar order was disbanded in 1312" (KEYWORD_MATCH: "Templar")
+[PDF Page 5 | Doc Page 130] Economic impacts included trade route changes (TOPIC_MATCH: [economic impact])`;
 
-        console.log('Sending enhanced request to Gemini...');
         const result = await model.generateContent({
             contents: [{
                 parts: [
@@ -63,26 +56,21 @@ EXAMPLE RESPONSE:
             }]
         });
 
-        console.log('Received Gemini response');
         const response = await result.response;
-        
-        if (!response.text) {
-            console.error('No text in Gemini response:', response);
-            return res.status(500).json({ error: 'Empty response from AI' });
-        }
+        const rawText = response.text();
 
-        // Post-process response
-        const formattedText = response.text()
-            .replace(/(\d+)\s*\|\s*(\d+)/g, 'PDF Page $1 | Content Page $2') // Standardize numbering
-            .replace(/No matches found/gi, 'No matches found in document');
+        // Post-processing
+        const formattedText = rawText
+            .replace(/(KEYWORD|TOPIC)_MATCH/g, '$1_MATCH')
+            .replace(/No matches found/gi, 'No historical matches found')
+            .replace(/(\d+)\s*\|\s*(\d+)/g, 'PDF Page $1 | Doc Page $2');
 
-        console.log('Successfully processed request');
         return res.status(200).json({ text: formattedText });
 
     } catch (error) {
-        console.error('Full error stack:', error.stack);
+        console.error('Error:', error.stack);
         return res.status(500).json({ 
-            error: error.message.includes('400') ? 'Invalid PDF format' : 'Processing failed',
+            error: error.message.includes('400') ? 'Invalid document format' : 'Historical analysis failed',
             details: error.message.slice(0, 100)
         });
     }
